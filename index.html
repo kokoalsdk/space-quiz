@@ -39,6 +39,7 @@ button:focus-visible,.q:focus-visible,.big:focus-visible{outline:3px solid var(-
 .result{text-align:center}
 .emoji{font-size:64px;animation:pop .8s}
 .big{font-size:36px;font-weight:700;margin:4px 0}
+.hint{font-size:12px;opacity:.7;margin:10px 0 0}
 .hidden{display:none}
 </style>
 </head>
@@ -55,13 +56,15 @@ button:focus-visible,.q:focus-visible,.big:focus-visible{outline:3px solid var(-
   <p class="q" id="q" tabindex="-1"></p>
   <div class="opts" id="opts"></div>
   <p class="fb" id="fb" role="status" aria-atomic="true"></p>
-  <button class="next" id="next" disabled>다음 문제</button>
+  <button class="next" id="next" disabled aria-keyshortcuts="Enter ArrowRight">다음 문제</button>
+  <p class="hint">단축키: 1–4 보기 선택 · Enter/→ 다음 문제</p>
 </div>
 <div class="card result hidden" id="res">
   <div class="emoji" id="emoji"></div>
   <h2 class="big" id="final" tabindex="-1" aria-describedby="emoji msg"></h2>
   <p id="msg"></p>
-  <button class="again" id="again">다시 도전하기</button>
+  <button class="again" id="again" aria-keyshortcuts="Enter">다시 도전하기</button>
+  <p class="hint">단축키: Enter 다시 도전</p>
 </div>
 </main>
 <script>
@@ -88,7 +91,7 @@ function show(){
   $("q").textContent=q;$("fb").textContent="";$("next").disabled=true;
   $("next").textContent=i==Q.length-1?"결과 보기":"다음 문제";
   $("opts").innerHTML="";
-  o.forEach((t,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=()=>pick(k,b);$("opts").append(b)});
+  o.forEach((t,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=`${k+1}. ${t}`;b.setAttribute("aria-label",`${k+1}번, ${t}`);b.setAttribute("aria-keyshortcuts",String(k+1));b.onclick=()=>pick(k,b);$("opts").append(b)});
   $("q").focus();
 }
 function pick(k,b){
@@ -110,6 +113,16 @@ function end(){
   $("final").focus();
 }
 $("again").onclick=start;
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey||e.altKey||e.metaKey||e.shiftKey||e.repeat||e.defaultPrevented)return;
+  const inQuiz=!$("quiz").classList.contains("hidden"),onBtn=e.target.tagName==="BUTTON";
+  if(inQuiz){
+    if(!locked&&/^[1-9]$/.test(e.key)){
+      const bs=$("opts").children,k=+e.key-1;
+      if(k<bs.length){e.preventDefault();pick(k,bs[k])}
+    }else if(locked&&(e.key==="ArrowRight"||(e.key==="Enter"&&!onBtn))){e.preventDefault();$("next").click()}
+  }else if(e.key==="Enter"&&!onBtn){e.preventDefault();start()}
+});
 start();
 </script>
 </body>
