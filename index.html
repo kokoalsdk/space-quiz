@@ -81,25 +81,28 @@ const Q=[
 ["블랙홀에서 빛조차 탈출하지 못하는 경계는?",["코로나","사건의 지평선","오로라","궤도"],1,"이 경계를 사건의 지평선이라 합니다."]
 ];
 const $=id=>document.getElementById(id);
-let i,score,locked;
-function start(){i=0;score=0;$("res").classList.add("hidden");$("quiz").classList.remove("hidden");show()}
+let i,score,locked,deck;
+function shuffle(a){a=[...a];for(let n=a.length-1;n>0;n--){const r=Math.floor(Math.random()*(n+1));[a[n],a[r]]=[a[r],a[n]]}return a}
+function start(){
+  deck=shuffle(Q).map(([q,o,a,e])=>({q,e,o:shuffle(o.map((t,k)=>({t,ok:k===a})))}));
+  i=0;score=0;$("res").classList.add("hidden");$("quiz").classList.remove("hidden");show()}
 function show(){
-  locked=false;const[q,o]=Q[i];
+  locked=false;const{q,o}=deck[i];
   $("num").textContent=`${i+1} / ${Q.length}`;$("score").textContent=score;
   $("prog").style.width=(i/Q.length*100)+"%";
   $("progress").setAttribute("aria-valuenow",i);
   $("q").textContent=q;$("fb").textContent="";$("next").disabled=true;
   $("next").textContent=i==Q.length-1?"결과 보기":"다음 문제";
   $("opts").innerHTML="";
-  o.forEach((t,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=`${k+1}. ${t}`;b.setAttribute("aria-label",`${k+1}번, ${t}`);b.setAttribute("aria-keyshortcuts",String(k+1));b.onclick=()=>pick(k,b);$("opts").append(b)});
+  o.forEach((x,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=`${k+1}. ${x.t}`;b.setAttribute("aria-label",`${k+1}번, ${x.t}`);b.setAttribute("aria-keyshortcuts",String(k+1));b.onclick=()=>pick(k,b);$("opts").append(b)});
   $("q").focus();
 }
 function pick(k,b){
   if(locked)return;locked=true;
-  const a=Q[i][2],bs=$("opts").children;
+  const{o,e}=deck[i],a=o.findIndex(x=>x.ok),bs=$("opts").children;
   [...bs].forEach(x=>x.disabled=true);
-  if(k===a){score++;b.classList.add("correct");$("fb").textContent="🎉 정답! "+Q[i][3]}
-  else{b.classList.add("wrong");bs[a].classList.add("correct");$("fb").textContent="💥 오답! "+Q[i][3]}
+  if(k===a){score++;b.classList.add("correct");$("fb").textContent="🎉 정답! "+e}
+  else{b.classList.add("wrong");bs[a].classList.add("correct");$("fb").textContent="💥 오답! "+e}
   $("score").textContent=score;$("next").disabled=false;
   $("prog").style.width=((i+1)/Q.length*100)+"%";
   $("progress").setAttribute("aria-valuenow",i+1);
