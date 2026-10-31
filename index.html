@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우주 탐험 퀴즈</title>
+<style>
+:root{--bg:#f3f5fb;--card:#fff;--text:#1b2033;--muted:#6a7290;--accent:#5b5bf0;--buttontext:#fff;--track:#e2e6f3;--border:#d9deef;--good:#22c55e;--goodbg:#dcfce7;--bad:#ef4444;--badbg:#fee2e2}
+@media(prefers-color-scheme:dark){:root{--bg:#0c0f1e;--card:#161a30;--text:#e8ebf8;--muted:#98a0c4;--accent:#8b8bff;--buttontext:#0c0f1e;--track:#262b4a;--border:#2c3254;--goodbg:#10341f;--badbg:#3a1518}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:32px 16px;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+main{width:100%;max-width:440px}
+.mission-header{position:relative;isolation:isolate;overflow:hidden;margin-bottom:20px;padding:20px;border:1px solid var(--border);border-top:3px solid var(--accent);border-radius:12px;background:var(--card)}
+.mission-header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.3;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:24px 24px}
+.mission-label{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.08em}
+.mission-label::before{content:"";width:8px;height:8px;flex-shrink:0;background:currentColor;border-radius:2px}
+h1{font-size:22px;line-height:1.4;margin:0 0 12px;text-align:left;letter-spacing:-.02em;overflow-wrap:anywhere}
+.sub{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;text-align:left;color:var(--muted);margin:0;padding-top:12px;border-top:1px solid var(--border);font-size:14px}
+.mission-code{padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font:600 12px/1.6 ui-monospace,Consolas,monospace;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 8px 30px rgba(40,40,120,.08)}
+.top{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:8px}
+.top b{color:var(--text)}
+.bar{height:8px;background:var(--track);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6366f1,#ec4899,#f59e0b);transition:width .5s}
+.q{font-size:17px;font-weight:600;margin:0 0 16px}
+.opts{display:grid;gap:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.q:focus-visible,.big:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.opt{text-align:left;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:transparent;transition:transform .15s,border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+.opt:disabled{cursor:default}
+.opt.correct{background:var(--goodbg);border-color:var(--good);animation:pop .5s}
+.opt.wrong{background:var(--badbg);border-color:var(--bad);animation:shake .45s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04);box-shadow:0 0 0 6px rgba(34,197,94,.3)}100%{transform:scale(1);box-shadow:0 0 0 0 transparent}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.fb{min-height:44px;margin:14px 0 0;font-size:14px;color:var(--muted)}
+.next,.again{width:100%;margin-top:6px;padding:12px;border:0;border-radius:12px;background:var(--accent);color:var(--buttontext);font-weight:600}
+.next:disabled{opacity:.4;cursor:default}
+.result{text-align:center}
+.emoji{font-size:64px;animation:pop .8s}
+.big{font-size:36px;font-weight:700;margin:4px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<header class="mission-header">
+<p class="mission-label">우주 탐사 · 미션 컨트롤</p>
+<h1><span aria-hidden="true">🚀</span> 우주 탐험 퀴즈</h1>
+<p class="sub"><span class="mission-code" aria-label="미션 01">MISSION 01</span><span>태양계와 우주에 대한 10문제</span></p>
+</header>
+<div class="card" id="quiz">
+  <div class="top"><span id="num">1 / 10</span><span>점수 <b id="score">0</b></span></div>
+  <div class="bar" id="progress" role="progressbar" aria-label="답변한 문제 수" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><i id="prog"></i></div>
+  <p class="q" id="q" tabindex="-1"></p>
+  <div class="opts" id="opts"></div>
+  <p class="fb" id="fb" role="status" aria-atomic="true"></p>
+  <button class="next" id="next" disabled>다음 문제</button>
+</div>
+<div class="card result hidden" id="res">
+  <div class="emoji" id="emoji"></div>
+  <h2 class="big" id="final" tabindex="-1" aria-describedby="emoji msg"></h2>
+  <p id="msg"></p>
+  <button class="again" id="again">다시 도전하기</button>
+</div>
+</main>
+<script>
+const Q=[
+["태양계에서 가장 큰 행성은?",["토성","목성","천왕성","해왕성"],1,"목성은 지구 지름의 약 11배입니다."],
+["'붉은 행성'이라 불리는 것은?",["화성","금성","수성","목성"],0,"산화철 때문에 붉게 보입니다."],
+["태양계에서 가장 뜨거운 행성은?",["수성","화성","금성","지구"],2,"짙은 이산화탄소 대기의 온실효과 때문입니다."],
+["달에 처음 발을 디딘 사람은?",["유리 가가린","버즈 올드린","존 글렌","닐 암스트롱"],3,"1969년 아폴로 11호였습니다."],
+["우리 은하의 이름은?",["안드로메다","은하수","마젤란","삼각형자리"],1,"우리 은하는 나선 은하입니다."],
+["태양빛이 지구에 도달하는 데 걸리는 시간은 약?",["8분","1초","1시간","24시간"],0,"약 8분 20초 걸립니다."],
+["고리가 가장 뚜렷한 행성은?",["천왕성","목성","토성","해왕성"],2,"토성의 고리는 얼음과 암석 조각입니다."],
+["최초의 인공위성의 이름은?",["보이저 1호","스푸트니크 1호","아폴로 1호","허블"],1,"1957년 소련이 발사했습니다."],
+["2006년 행성에서 왜소행성으로 분류된 천체는?",["세레스","에리스","명왕성","달"],2,"명왕성은 왜소행성이 되었습니다."],
+["블랙홀에서 빛조차 탈출하지 못하는 경계는?",["코로나","사건의 지평선","오로라","궤도"],1,"이 경계를 사건의 지평선이라 합니다."]
+];
+const $=id=>document.getElementById(id);
+let i,score,locked;
+function start(){i=0;score=0;$("res").classList.add("hidden");$("quiz").classList.remove("hidden");show()}
+function show(){
+  locked=false;const[q,o]=Q[i];
+  $("num").textContent=`${i+1} / ${Q.length}`;$("score").textContent=score;
+  $("prog").style.width=(i/Q.length*100)+"%";
+  $("progress").setAttribute("aria-valuenow",i);
+  $("q").textContent=q;$("fb").textContent="";$("next").disabled=true;
+  $("next").textContent=i==Q.length-1?"결과 보기":"다음 문제";
+  $("opts").innerHTML="";
+  o.forEach((t,k)=>{const b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=()=>pick(k,b);$("opts").append(b)});
+  $("q").focus();
+}
+function pick(k,b){
+  if(locked)return;locked=true;
+  const a=Q[i][2],bs=$("opts").children;
+  [...bs].forEach(x=>x.disabled=true);
+  if(k===a){score++;b.classList.add("correct");$("fb").textContent="🎉 정답! "+Q[i][3]}
+  else{b.classList.add("wrong");bs[a].classList.add("correct");$("fb").textContent="💥 오답! "+Q[i][3]}
+  $("score").textContent=score;$("next").disabled=false;
+  $("prog").style.width=((i+1)/Q.length*100)+"%";
+  $("progress").setAttribute("aria-valuenow",i+1);
+  $("next").focus();
+}
+$("next").onclick=()=>{i++;i<Q.length?show():end()};
+function end(){
+  $("quiz").classList.add("hidden");$("res").classList.remove("hidden");
+  const[e,m]=score==10?["🏆","완벽해요! 당신은 우주 비행사!"]:score>=8?["🚀","훌륭해요! 우주 탐험가!"]:score>=5?["🌙","좋아요! 조금만 더 탐험해 봐요."]:["🌍","지구에서 다시 출발해 볼까요?"];
+  $("emoji").textContent=e;$("final").textContent=`${score} / ${Q.length}`;$("msg").textContent=m;
+  $("final").focus();
+}
+$("again").onclick=start;
+start();
+</script>
+</body>
+</html>
